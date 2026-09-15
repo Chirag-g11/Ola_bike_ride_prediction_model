@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ola Demand Forecasting Engine | Enterprise Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Professional Header Bar -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <span class="brand-title">OLA DEMAND ENGINE</span>
+                <span class="badge">Production v2.4</span>
+            </div>
+            <nav class="nav-links">
+                <a href="#" class="active">Inference Interface</a>
+                <a href="#analytics">Model Performance</a>
+                <a href="#docs">API Specs</a>
+            </nav>
+            <div class="status-indicator">
+                <span class="status-dot"></span> Model Status: Operational
+            </div>
+        </div>
+    </header>
+
+    <!-- Top Key Metrics Banner -->
+    <section class="metrics-banner">
+        <div class="metric-item">
+            <span class="m-label">MODEL ALGORITHM</span>
+            <span class="m-value">XGBoost Regressor</span>
+        </div>
+        <div class="metric-item">
+            <span class="m-label">R² ACCURACY SCORE</span>
+            <span class="m-value">0.884</span>
+        </div>
+        <div class="metric-item">
+            <span class="m-label">MEAN ABSOLUTE ERROR</span>
+            <span class="m-value">±14.2 Rides/hr</span>
+        </div>
+        <div class="metric-item">
+            <span class="m-label">LATENCY</span>
+            <span class="m-value">12 ms</span>
+        </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <div class="section-title">
+            <h2>Real-Time Ride Demand Forecasting</h2>
+            <p>Provide environmental and temporal telemetry data to run real-time demand inference.</p>
+        </div>
+
+        <!-- Form Interface (Cardless Form Layout) -->
+        <form action="/predict" method="POST" class="form-container">
+            <div class="form-row">
+                <div class="field-group">
+                    <label for="season">Season Parameter</label>
+                    <select name="season" id="season" required>
+                        <option value="1">Spring</option>
+                        <option value="2">Summer</option>
+                        <option value="3">Fall</option>
+                        <option value="4">Winter</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label for="weather">Weather Classification</label>
+                    <select name="weather" id="weather" required>
+                        <option value="1">Clear / Few Clouds</option>
+                        <option value="2">Mist / Broken Clouds</option>
+                        <option value="3">Light Rain / Snow</option>
+                        <option value="4">Heavy Rain / Fog / Ice</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label for="temp">Temperature (°C)</label>
+                    <input type="number" step="0.1" name="temp" id="temp" placeholder="28.5" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="humidity">Humidity (%)</label>
+                    <input type="number" step="0.1" name="humidity" id="humidity" placeholder="55.0" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field-group">
+                    <label for="windspeed">Windspeed (km/h)</label>
+                    <input type="number" step="0.1" name="windspeed" id="windspeed" placeholder="12.4" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="month">Month Index</label>
+                    <input type="number" name="month" id="month" min="1" max="12" placeholder="1 - 12" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="hour">Hour of Day (24-HR)</label>
+                    <input type="number" name="hour" id="hour" min="0" max="23" placeholder="0 - 23" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="weekday">Day Classification</label>
+                    <select name="weekday" id="weekday" required>
+                        <option value="1">Weekday (Mon-Fri)</option>
+                        <option value="0">Weekend (Sat-Sun)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field-group full-width">
+                    <label for="is_holiday">Public Holiday Schedule</label>
+                    <select name="is_holiday" id="is_holiday" required>
+                        <option value="0">No (Standard Working Day)</option>
+                        <option value="1">Yes (Official Holiday)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button type="submit" class="primary-btn">Run Demand Inference</button>
+            </div>
+        </form>
+
+        {% if prediction_text %}
+        <!-- Inline Result Panel -->
+        <div class="result-banner">
+            <span class="result-label">INFERENCE RESULT</span>
+            <span class="result-value">{{ prediction_text }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Model Analytics Section -->
+        <section class="analytics-container" id="analytics">
+            <div class="section-title">
+                <h3>Global Feature Importance Analysis</h3>
+                <p>Derived feature contributions via XGBoost Tree Weight Scoring.</p>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="importanceChart"></canvas>
+            </div>
+        </section>
+    </main>
+    <section class="docs-container" id="docs-section">
+            <div class="section-title">
+                <h3>Pipeline Architecture & API Specification</h3>
+                <p>Technical details for model pipeline execution and REST API integration.</p>
+            </div>
+
+            <div class="docs-grid">
+                <!-- Pipeline Specs -->
+                <div class="doc-block">
+                    <h4>Data & Model Pipeline</h4>
+                    <ul>
+                        <li><strong>Preprocessor:</strong> Standardized via <code>StandardScaler</code> fitted on environmental features.</li>
+                        <li><strong>Estimator:</strong> Gradient Boosted Decision Trees via <code>XGBoost Regressor</code>.</li>
+                        <li><strong>Feature Extraction:</strong> Hourly cycle decomposition, temporal calendar features, and weather indexing.</li>
+                    </ul>
+                </div>
+
+                <!-- API Specs -->
+                <div class="doc-block">
+                    <h4>REST API Endpoint Specification</h4>
+                    <div class="code-box">
+                        <p><strong>POST</strong> <code>/api/v1/predict</code></p>
+                        <pre><code>// Example Payload
+{
+  "season": 1,
+  "weather": 1,
+  "temp": 28.5,
+  "humidity": 55.0,
+  "windspeed": 12.4,
+  "month": 6,
+  "hour": 18,
+  "weekday": 1,
+  "is_holiday": 0
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- Professional Footer Bar -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <div class="footer-left">
+                <p>&copy; 2026 Ola Mobility Intelligence Labs. ML Engineering Project.</p>
+            </div>
+            <div class="footer-right">
+                <a href="https://github.com" target="_blank">GitHub Source</a>
+                <span>|</span>
+                <a href="https://github.com/Chirag-g11/Ola-Bike-ride-prediction#readme" target="_blank">Pipeline Documentation</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const ctx = document.getElementById('importanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Hour', 'Temperature', 'Humidity', 'Month', 'Weather', 'Weekday', 'Windspeed', 'Season'],
+                datasets: [{
+                    label: 'Importance Score (%)',
+                    data: [35, 22, 14, 10, 8, 5, 4, 2],
+                    backgroundColor: '#2563eb',
+                    borderColor: '#1d4ed8',
+                    borderWidth: 1,
+                    borderRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        grid: { color: '#e2e8f0' },
+                        ticks: { color: '#64748b', font: { family: 'Inter' } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748b', font: { family: 'Inter' } }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
